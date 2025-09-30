@@ -38,9 +38,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scheduleControllerDefault = void 0;
 exports.scheduleController = scheduleController;
-var taskFactory_1 = require("../factories/taskFactory");
-var scheduleManager_1 = require("../patterns/singleton/scheduleManager");
-var logger_1 = require("../logger/logger");
+var taskFactory_1 = require("../../factories/taskFactory");
+var scheduleManager_1 = require("../../patterns/singleton/scheduleManager");
+var logger_1 = require("../../logger/logger");
 var manager = scheduleManager_1.ScheduleManager.getInstance();
 function parseEditFlags(args) {
     var updates = {};

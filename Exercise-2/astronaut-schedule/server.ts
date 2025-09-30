@@ -3,6 +3,7 @@ import { scheduleController } from "./src/app/controllers/scheduleController";
 
 const app = express();
 app.use(express.json());
+app.use(express.static("public")); // serve HTML frontend
 
 app.get("/", (req, res) => {
   res.send("Astronaut Schedule API is running 🚀");
@@ -10,8 +11,8 @@ app.get("/", (req, res) => {
 
 app.post("/run", async (req, res) => {
   const { cmd, args } = req.body;
-  const exit = await scheduleController(cmd, args || []);
-  res.json({ success: !exit });
+  const result = await scheduleController(cmd, args || []); 
+  res.json(result); 
 });
 
 const port = process.env.PORT || 3000;

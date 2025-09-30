@@ -2,123 +2,163 @@ import { TaskFactory } from '../factories/taskFactory';
 import { ScheduleManager } from '../patterns/singleton/scheduleManager';
 import { getLogger } from '../logger/logger';
 
+// Define the expected return type for the frontend
+export type ControllerResult = {
+    success: boolean;
+    message?: string;
+    error?: string;
+};
+
 const manager = ScheduleManager.getInstance();
+const logger = getLogger();
 
 function parseEditFlags(args: string[]) {
-  const updates: any = {};
-  for (let i = 0; i < args.length; i++) {
-    const a = args[i];
-    if (a === '--desc' && args[i + 1]) {
-      updates.description = args[++i];
-    } else if (a === '--start' && args[i + 1]) {
-      updates.start = args[++i];
-    } else if (a === '--end' && args[i + 1]) {
-      updates.end = args[++i];
-    } else if (a === '--priority' && args[i + 1]) {
-      updates.priority = args[++i];
+    const updates: any = {};
+    for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (a === '--desc' && args[i + 1]) {
+            updates.description = args[++i];
+        } else if (a === '--start' && args[i + 1]) {
+            updates.start = args[++i];
+        } else if (a === '--end' && args[i + 1]) {
+            updates.end = args[++i];
+        } else if (a === '--priority' && args[i + 1]) {
+            updates.priority = args[++i];
+        }
     }
-  }
-  return updates;
+    return updates;
 }
 
-export async function scheduleController(cmd: string, args: string[]): Promise<boolean> {
-  const logger = getLogger();
-  switch (cmd) {
-    case 'help':
-      console.log('Commands:');
-      console.log('  add "description" HH:mm HH:mm [High|Medium|Low]');
-      console.log('  remove <id|description>');
-      console.log('  view [--priority High|Medium|Low]');
-      console.log('  edit <id> [--desc "..."] [--start HH:mm] [--end HH:mm] [--priority High]');
-      console.log('  complete <id|description>');
-      console.log('  help');
-      console.log('  exit');
-      break;
-
-    case 'add': {
-      const [description, start, end, priority] = args;
-      if (!description || !start || !end) {
-        console.error('Usage: add "description" HH:mm HH:mm [Priority]');
-        break;
-      }
-      try {
-        const task = TaskFactory.create({ description, start, end, priority: (priority as any) });
-        await manager.addTask(task);
-        console.log('Task added successfully. id=', task.id);
-      } catch (err: any) {
-        logger.warn(err.message || err);
-        console.error('Error:', err.message || err);
-      }
-      break;
+/**
+ * Handles all CLI commands and returns a structured result for the browser UI.
+ */
+export async function scheduleController(cmd: string, args: string[]): Promise<ControllerResult> {
+    
+    // Commands that return true for the old structure now return a specific exit message
+    if (cmd === 'exit') {
+        return { success: true, message: 'Exiting CLI session...' };
     }
 
-    case 'view': {
-      const flag = args[0];
-      let tasks = manager.getAllTasks();
-      if (flag === '--priority' && args[1]) {
-        tasks = manager.getTasksByPriority(args[1] as any);
-      }
-      if (!tasks || tasks.length === 0) {
-        console.log('No tasks scheduled for the day.');
-      } else {
-        for (const t of tasks) {
-          console.log(`${t.start} - ${t.end}: ${t.description} [${t.priority}]${t.completed ? ' (Completed)' : ''} (id: ${t.id})`);
+    switch (cmd) {
+        case 'help': {
+            const helpText = `
+Available Commands:
+-------------------
+ add "description" HH:mm HH:mm [High|Medium|Low]
+ remove <id|description>
+ view [--priority High|Medium|Low]
+ edit <id> [--desc "..."] [--start HH:mm] [--end HH:mm] [--priority High]
+ complete <id|description>
+ help: Shows this help message.
+ exit: Ends the current CLI session.
+`;
+            return { success: true, message: helpText };
         }
-      }
-      break;
+
+        case 'add': {
+            const [description, start, end, priority] = args;
+            if (!description || !start || !end) {
+                return { success: false, error: 'Usage: add "description" HH:mm HH:mm [Priority]' };
+            }
+            try {
+                // Assuming simple splitting for now based on the old implementation args[0].
+                const task = TaskFactory.create({ description, start, end, priority: (priority as any) });
+                await manager.addTask(task);
+                return { success: true, message: `✅ Task added successfully. ID: ${task.id} (${description})` };
+            } catch (err: any) {
+                logger.warn(`ADD Error: ${err.message || err}`);
+                return { success: false, error: `Error adding task: ${err.message || 'Invalid task data.'}` };
+            }
+        }
+
+        case 'view': {
+            const flag = args[0];
+            let tasks = manager.getAllTasks();
+            if (flag === '--priority' && args[1]) {
+                tasks = manager.getTasksByPriority(args[1] as any);
+                if (tasks.length === 0) {
+                     return { success: true, message: `No tasks found with priority: ${args[1]}.` };
+                }
+            }
+            
+            if (!tasks || tasks.length === 0) {
+                return { success: true, message: 'No tasks scheduled for the day. Schedule is clear! 🚀' };
+            } else {
+                const output = tasks
+                    .map(t => {
+                        const status = t.completed ? '✅ (Completed)' : '⏳ (Pending)';
+                        return `ID: ${t.id.toString().padEnd(3)} | ${t.start} - ${t.end} | [${t.priority.padEnd(6)}] | ${t.description} ${status}`;
+                    })
+                    .join('\n');
+                
+                return { success: true, message: `--- Daily Schedule ---\n${output}\n----------------------` };
+            }
+        }
+
+        case 'remove': {
+            const key = args.join(' ');
+            if (!key) {
+                return { success: false, error: 'Usage: remove <id|description>' };
+            }
+            
+            let ok = manager.removeTask(key);
+            let removedDescription = '';
+            
+            if (!ok) {
+                const found = manager.getAllTasks().find(t => t.description === key || t.description.includes(key));
+                if (found) {
+                    ok = manager.removeTask(found.id);
+                    removedDescription = found.description;
+                }
+            }
+            
+            return ok 
+                ? { success: true, message: `🗑️ Task removed successfully: ${removedDescription || key}.` }
+                : { success: false, error: `Error: Task not found by ID or description: "${key}".` };
+        }
+
+        case 'edit': {
+            const id = args[0];
+            if (!id) {
+                return { success: false, error: 'Usage: edit <id> [--desc "..."] [--start HH:mm] [--end HH:mm] [--priority <level>]' };
+            }
+            const updates = parseEditFlags(args.slice(1));
+            
+            if (Object.keys(updates).length === 0) {
+                 return { success: false, error: 'No update flags provided. Use --desc, --start, --end, or --priority.' };
+            }
+
+            const ok = manager.editTask(id, updates);
+            return ok 
+                ? { success: true, message: `📝 Task ${id} updated successfully.` } 
+                : { success: false, error: 'Error: Could not update task. Check ID, task conflict, or invalid data.' };
+        }
+
+        case 'complete': {
+            const key = args.join(' ');
+            if (!key) {
+                return { success: false, error: 'Usage: complete <id|description>' };
+            }
+            
+            let ok = manager.markComplete(key);
+            let completedDescription = '';
+            
+            if (!ok) {
+                const found = manager.getAllTasks().find(t => t.description === key || t.description.includes(key));
+                if (found) {
+                    ok = manager.markComplete(found.id);
+                    completedDescription = found.description;
+                }
+            }
+            
+            return ok 
+                ? { success: true, message: `✅ Task marked as completed: ${completedDescription || key}.` } 
+                : { success: false, error: `Error: Task not found by ID or description: "${key}".` };
+        }
+
+        default:
+            return { success: false, error: `Unknown command: "${cmd}". Type help` };
     }
-
-    case 'remove': {
-      const key = args.join(' ');
-      if (!key) {
-        console.error('Usage: remove <id|description>');
-        break;
-      }
-      // try id first
-      let ok = manager.removeTask(key);
-      if (!ok) {
-        // try by description (exact match or substring)
-        const found = manager.getAllTasks().find(t => t.description === key || t.description.includes(key));
-        if (found) ok = manager.removeTask(found.id);
-      }
-      console.log(ok ? 'Task removed successfully.' : 'Error: Task not found.');
-      break;
-    }
-
-    case 'edit': {
-      const id = args[0];
-      if (!id) {
-        console.error('Usage: edit <id> [--desc "..."] [--start HH:mm] [--end HH:mm] [--priority <level>]');
-        break;
-      }
-      const updates = parseEditFlags(args.slice(1));
-      const ok = manager.editTask(id, updates);
-      console.log(ok ? 'Task updated successfully.' : 'Error: Could not update task (conflict or invalid data).');
-      break;
-    }
-
-    case 'complete': {
-      const key = args.join(' ');
-      if (!key) {
-        console.error('Usage: complete <id|description>');
-        break;
-      }
-      let ok = manager.markComplete(key);
-      if (!ok) {
-        const found = manager.getAllTasks().find(t => t.description === key || t.description.includes(key));
-        if (found) ok = manager.markComplete(found.id);
-      }
-      console.log(ok ? 'Task marked as completed.' : 'Error: Task not found.');
-      break;
-    }
-
-    case 'exit':
-      return true;
-
-    default:
-      console.log('Unknown command. Type help');
-  }
-  return false;
 }
 
 export const scheduleControllerDefault = scheduleController;

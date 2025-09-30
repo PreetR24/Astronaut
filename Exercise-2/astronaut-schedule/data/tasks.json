@@ -7,14 +7,6 @@
       "end": "17:00",
       "priority": "High",
       "completed": true
-    },
-    {
-      "id": "7bdbf889-5db9-47ad-84fb-c171009968e3",
-      "description": "Spacewalk",
-      "start": "09:00",
-      "end": "11:00",
-      "priority": "High",
-      "completed": false
     }
   ]
 }
