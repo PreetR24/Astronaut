@@ -11,7 +11,7 @@ var Task = /** @class */ (function () {
         this.priority = props.priority || 'Medium';
         this.completed = props.completed || false;
         if (!Task.validateTimeFormat(this.start) || !Task.validateTimeFormat(this.end)) {
-            throw new Error('Invalid time format; expected HH:mm');
+            throw new Error('Invalid time format ensure between 00:00 to 24:00;');
         }
         if (Task.parseTimeToMinutes(this.start) >= Task.parseTimeToMinutes(this.end)) {
             throw new Error('Start time must be before end time');

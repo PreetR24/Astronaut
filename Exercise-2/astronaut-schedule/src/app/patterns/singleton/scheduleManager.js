@@ -60,7 +60,6 @@ var ScheduleManager = /** @class */ (function () {
     ScheduleManager.getInstance = function () {
         if (!ScheduleManager.instance)
             ScheduleManager.instance = new ScheduleManager();
-        // synchronous load (local file) for quick access — async init preferred for supabase
         try {
             var loaded = persistenceService_1.PersistenceService.loadSync();
             if (loaded && loaded.tasks) {
@@ -75,7 +74,6 @@ var ScheduleManager = /** @class */ (function () {
         }
         return ScheduleManager.instance;
     };
-    // async initialization to load from remote persistence (e.g., Supabase)
     ScheduleManager.init = function () {
         return __awaiter(this, void 0, void 0, function () {
             var loaded, _i, _a, t, e_1;
@@ -109,9 +107,6 @@ var ScheduleManager = /** @class */ (function () {
     ScheduleManager.getInstanceAsync = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                if (process.env.STORAGE === 'supabase') {
-                    return [2 /*return*/, this.init()];
-                }
                 return [2 /*return*/, this.getInstance()];
             });
         });

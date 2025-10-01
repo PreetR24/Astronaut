@@ -13,7 +13,6 @@ export class ScheduleManager {
 
     static getInstance(): ScheduleManager {
         if (!ScheduleManager.instance) ScheduleManager.instance = new ScheduleManager();
-        // synchronous load (local file) for quick access — async init preferred for supabase
         try {
             const loaded = PersistenceService.loadSync();
             if (loaded && loaded.tasks) {
@@ -27,27 +26,7 @@ export class ScheduleManager {
         return ScheduleManager.instance;
     }
 
-    // async initialization to load from remote persistence (e.g., Supabase)
-    static async init(): Promise<ScheduleManager> {
-        if (!ScheduleManager.instance) ScheduleManager.instance = new ScheduleManager();
-        try {
-            const loaded = await PersistenceService.loadAll();
-            if (loaded && loaded.tasks) {
-                ScheduleManager.instance.tasks.clear();
-                for (const t of loaded.tasks) {
-                    ScheduleManager.instance.tasks.set(t.id, t as Task);
-                }
-            }
-        } catch (e) {
-            // fallback to sync load handled in getInstance
-        }
-        return ScheduleManager.instance;
-    }
-
     static async getInstanceAsync(): Promise<ScheduleManager> {
-        if (process.env.STORAGE === 'supabase') {
-            return this.init();
-        }
         return this.getInstance();
     }
 

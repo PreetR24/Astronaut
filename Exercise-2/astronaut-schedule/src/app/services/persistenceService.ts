@@ -8,17 +8,6 @@ function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Dynamic import of supabase-backed persistence to avoid requiring the package when not used
-async function getSupabasePersistence() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = await import('./persistenceService.supabase');
-    return mod.SupabasePersistence;
-  } catch (e) {
-    return null;
-  }
-}
-
 export class PersistenceService {
   static loadSync() {
     try {
@@ -32,22 +21,10 @@ export class PersistenceService {
   }
 
   static async loadAll() {
-    if (process.env.STORAGE === 'supabase') {
-      const SupabasePersistence = await getSupabasePersistence();
-      if (!SupabasePersistence) throw new Error('SupabasePersistence not available');
-      return SupabasePersistence.loadAll();
-    }
-    // Local file-based
     return this.loadSync();
   }
 
   static async saveWithRetry(obj: any, maxAttempts = 3) {
-    if (process.env.STORAGE === 'supabase') {
-      const SupabasePersistence = await getSupabasePersistence();
-      if (!SupabasePersistence) throw new Error('SupabasePersistence not available');
-      return SupabasePersistence.saveWithRetry(obj);
-    }
-
     ensureDir();
     const data = JSON.stringify(obj, null, 2);
     let attempt = 0;

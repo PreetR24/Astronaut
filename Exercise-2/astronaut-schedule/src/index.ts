@@ -9,7 +9,6 @@ const rl = readline.createInterface({
   terminal: true,
 });
 
-// ensure persistence (Supabase) is initialized if configured
 ScheduleManager.getInstanceAsync().then((manager) => {
   manager.registerNotifier(new ConsoleNotifier());
 }).catch(() => {

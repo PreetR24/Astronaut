@@ -11,9 +11,12 @@
       font-family: 'Consolas', 'Courier New', monospace;
       padding: 20px;
       margin: 0;
+      display: flex;
+      justify-content: center;
     }
     #terminal-window {
       background-color: #000000;
+      width: 90%;
       border: 1px solid #333;
       max-width: 800px;
       margin: 0 auto;
@@ -21,6 +24,8 @@
       box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
       overflow-y: auto;
       user-select: text;
+      border-radius: 6px;
+      min-height: 60vh;
     }
     .prompt {
       color: #00ff00; /* Green for prompt */
@@ -40,7 +45,7 @@
       border: none;
       color: #d4d4d4;
       font-family: inherit;
-      font-size: inherit;
+      font-size: 1rem;
       outline: none;
     }
     .error {
@@ -51,6 +56,39 @@
     }
     .welcome {
       color: #ffdc00; /* Yellow for welcome */
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      #terminal-window {
+        width: 95%;
+        min-height: 50vh;
+        font-size: 0.95rem;
+      }
+
+      #cmdInput {
+        font-size: 0.9rem;
+      }
+    }
+
+    /* For small screens / mobile */
+    @media (max-width: 480px) {
+      #terminal-window {
+        width: 100%;
+        padding: 8px;
+        min-height: 40vh;
+        font-size: 0.85rem;
+      }
+
+      .prompt {
+        font-size: 0.85rem;
+      }
+
+      #cmdInput {
+        font-size: 0.85rem;
+      }
     }
   </style>
 </head>

@@ -48,7 +48,6 @@ var rl = readline_1.default.createInterface({
     output: process.stdout,
     terminal: true,
 });
-// ensure persistence (Supabase) is initialized if configured
 scheduleManager_1.ScheduleManager.getInstanceAsync().then(function (manager) {
     manager.registerNotifier(new consoleNotifier_1.ConsoleNotifier());
 }).catch(function () {
