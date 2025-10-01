@@ -19,8 +19,6 @@ A console-based TypeScript application to manage an astronaut's daily tasks. It 
 - Interactive CLI for task management
 - Task validation (time formats, overlaps)
 - Persistent storage to JSON file
-- Comprehensive test suite with Jest
-- Logging with Winston
 
 ### Live Demo
 You can explore the deployed project here:  
@@ -46,7 +44,12 @@ Requirements: Node.js 18+ and npm
 
 4. Run the interactive CLI:
    ```bash
-   npm run start
+   npm run server
+   ```
+
+5. Run in terminal
+   ```bash
+   npm start
    ```
 
 ### Commands
@@ -66,6 +69,3 @@ Requirements: Node.js 18+ and npm
 
 ### Persistence
 Tasks are saved to `./data/tasks.json` with retry/backoff for durability.
-
-## Contributing
-Feel free to explore the exercises, run the applications, and modify the code to learn more about design patterns and software architecture.
