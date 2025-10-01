@@ -22,6 +22,10 @@ A console-based TypeScript application to manage an astronaut's daily tasks. It 
 - Comprehensive test suite with Jest
 - Logging with Winston
 
+### Live Demo
+You can explore the deployed project here:  
+👉 [Astronaut Daily Schedule Organizer](https://astronaut-r2lg.onrender.com/)
+
 ### Quick Start
 Requirements: Node.js 18+ and npm
 
