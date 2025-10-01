@@ -32,7 +32,6 @@
       display: inline;
     }
     #output-history {
-      white-space: pre-wrap;
       user-select: text;
     }
     #input-line {
@@ -210,23 +209,35 @@
 
      const data = await response.json();
      
-     // Display the output
-     const outputLine = document.createElement('pre');
+      // Display the output
+      const outputLine = document.createElement('pre');
      
-     // Format output nicely based on the backend's response structure
-     if (data.success && data.message) {
-      outputLine.className = 'success';
-      outputLine.textContent = data.message;
-     } else if (!data.success && data.error) {
-      outputLine.className = 'error';
-      outputLine.textContent = `Error: ${data.error}`;
-     } else {
-      // Fallback
-      outputLine.className = data.success ? 'success' : 'error';
-      outputLine.textContent = data.success ? `Command '${cmd}' executed successfully.` : `Command '${cmd}' failed. Check server logs.`;
-     }
+      if (data.success && data.message) {
+        outputLine.className = 'success';
+        outputLine.textContent = data.message;
+        historyDiv.appendChild(outputLine);
 
-     historyDiv.appendChild(outputLine);
+        // ✅ If exit command -> lock input
+        if (cmd.toLowerCase() === 'exit') {
+          input.disabled = true;
+          input.blur();
+          const goodbyeLine = document.createElement('p');
+          goodbyeLine.className = 'welcome';
+          goodbyeLine.textContent = "Goodbye — exiting. Tasks are persisted to disk.";
+          historyDiv.appendChild(goodbyeLine);
+        }
+
+      } else if (!data.success && data.error) {
+        outputLine.className = 'error';
+        outputLine.textContent = `Error: ${data.error}`;
+        historyDiv.appendChild(outputLine);
+      } else {
+        outputLine.className = data.success ? 'success' : 'error';
+        outputLine.textContent = data.success
+          ? `Command '${cmd}' executed successfully.`
+          : `Command '${cmd}' failed. Check server logs.`;
+        historyDiv.appendChild(outputLine);
+      }
 
     } catch (error) {
      const errorLine = document.createElement('pre');
