@@ -1,6 +1,6 @@
 import { minutesSinceMidnight } from '../utils/timeUtils';
 
-export type Priority = 'High' | 'Medium' | 'Low';
+export type Priority = 'high' | 'medium' | 'low';
 
 export class Task {
   id: string;
@@ -22,7 +22,7 @@ export class Task {
     this.description = props.description;
     this.start = props.start;
     this.end = props.end;
-    this.priority = props.priority || 'Medium';
+    this.priority = props.priority || 'medium';
     this.completed = props.completed || false;
 
     if (!Task.validateTimeFormat(this.start) || !Task.validateTimeFormat(this.end)) {

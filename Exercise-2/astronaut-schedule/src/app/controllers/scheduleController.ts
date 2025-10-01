@@ -1,6 +1,7 @@
 import { TaskFactory } from '../factories/taskFactory';
 import { ScheduleManager } from '../patterns/singleton/scheduleManager';
 import { getLogger } from '../logger/logger';
+import { Priority } from '../models/task';
 
 // Define the expected return type for the frontend
 export type ControllerResult = {
@@ -51,18 +52,31 @@ Available Commands:
  complete <id|description>
  help: Shows this help message.
  exit: Ends the current CLI session.
+ clear: Clears the console display.
 `;
             return { success: true, message: helpText };
         }
 
         case 'add': {
-            const [description, start, end, priority] = args;
+            const [description, start, end, priorityArg] = args;
             if (!description || !start || !end) {
-                return { success: false, error: 'Usage: add "description" HH:mm HH:mm [Priority]' };
+                return { success: false, error: 'Usage: add "description" HH:mm HH:mm [priority]' };
             }
             try {
-                // Assuming simple splitting for now based on the old implementation args[0].
-                const task = TaskFactory.create({ description, start, end, priority: (priority as any) });
+                const normalizedPriority = priorityArg ? priorityArg.toLowerCase() : 'medium';
+                const validPriorities = ['high', 'medium', 'low'];
+
+                if (!validPriorities.includes(normalizedPriority)) {
+                    return { success: false, error: `Invalid priority "${priorityArg}". Use high, medium, or low.` };
+                }
+
+                const task = TaskFactory.create({ 
+                    description, 
+                    start, 
+                    end, 
+                    priority: normalizedPriority as Priority 
+                });
+
                 await manager.addTask(task);
                 return { success: true, message: `✅ Task added successfully. ID: ${task.id} (${description})` };
             } catch (err: any) {
@@ -72,15 +86,22 @@ Available Commands:
         }
 
         case 'view': {
-            const flag = args[0];
             let tasks = manager.getAllTasks();
-            if (flag === '--priority' && args[1]) {
-                tasks = manager.getTasksByPriority(args[1] as any);
-                if (tasks.length === 0) {
-                     return { success: true, message: `No tasks found with priority: ${args[1]}.` };
+
+            if (args.length > 0) {
+                const priorityArg = args[0].toLowerCase();
+                const validPriorities: Priority[] = ['high', 'medium', 'low'];
+
+                if (validPriorities.includes(priorityArg as Priority)) {
+                    tasks = manager.getTasksByPriority(priorityArg as Priority);
+                    if (tasks.length === 0) {
+                        return { success: true, message: `No tasks found with priority: ${priorityArg}.` };
+                    }
+                } else {
+                    return { success: false, error: `Invalid priority "${priorityArg}". Use high, medium, or low.` };
                 }
             }
-            
+
             if (!tasks || tasks.length === 0) {
                 return { success: true, message: 'No tasks scheduled for the day. Schedule is clear! 🚀' };
             } else {
@@ -90,7 +111,7 @@ Available Commands:
                         return `ID: ${t.id.toString().padEnd(3)} | ${t.start} - ${t.end} | [${t.priority.padEnd(6)}] | ${t.description} ${status}`;
                     })
                     .join('\n');
-                
+
                 return { success: true, message: `--- Daily Schedule ---\n${output}\n----------------------` };
             }
         }

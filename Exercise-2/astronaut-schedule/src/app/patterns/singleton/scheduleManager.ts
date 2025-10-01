@@ -120,6 +120,8 @@ export class ScheduleManager {
     }
 
     getTasksByPriority(priority: Task['priority']): Task[] {
-        return this.getAllTasks().filter((t) => t.priority === priority);
+        return this.getAllTasks().filter(
+            (t) => t.priority.toLowerCase() === priority.toLowerCase()
+        );
     }
 }
